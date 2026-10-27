@@ -2,3 +2,5 @@ build-inputs/
 patcher/
 *.jar
 *.log
+__pycache__/
+*.pyc
