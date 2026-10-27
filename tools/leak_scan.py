@@ -4,9 +4,11 @@ The bundle (eaglercraft-java-source-patch-bundle v1) stores new files in full an
 deltas whose only text is the inserted bytes (removed bytes are hashes). This tool pulls out every piece of text the
 bundle would publish and compares it with the base tree, which only ever exists on the machine running the check.
 
-A "window" is WINDOW consecutive significant lines (blank lines, lines of only braces/punctuation, and import/package lines are skipped,
-whitespace is normalised). Any window of the bundle's text that also occurs in the base tree is a leak and fails the
-check. Single lines of LONG_LINE characters or more that also occur in the base tree are listed as warnings, since a
+A "window" is WINDOW consecutive significant lines (blank lines, lines of only braces/punctuation, import/package lines, annotation-only lines such as @Override and
+method signatures are skipped,
+whitespace is normalised). Any window (of at least MIN_WINDOW_CHARS characters in total) of the bundle's text that also occurs in the base tree is a leak and fails the
+check. Single lines of LONG_LINE characters or more that also occur in the base tree are listed as warnings (method
+signatures are not counted: an override has to repeat the signature it overrides), since a
 long copied line is a likely sign of copied code even when its neighbours differ.
 
     python3 -I tools/leak_scan.py --base <decompiled java tree> --bundle <bundle dir> [--report report.json]
@@ -22,22 +24,34 @@ import re
 import sys
 
 WINDOW = 3
+MIN_WINDOW_CHARS = 100
 LONG_LINE = 60
-SKIP = re.compile(r"^([\s{}()\[\];,]*|(import|package)\s.*)$")
+SIGNATURE = re.compile(r"^(@\w+\s+)*((public|protected|private|static|final|abstract|synchronized|default)\s+)*[\w<>\[\],.? ]+\s+\w+\([^)]*\)\s*(throws [\w, .]+)?\s*\{$")
+SKIP = re.compile(r"^([\s{}()\[\];,]*|(import|package)\s.*|@\w+(\(.*\))?)$")
 
 
-def sig_lines(text):
+def sig_lines(text, keep_signatures=False):
     out = []
     for raw in text.splitlines():
         line = " ".join(raw.split())
-        if not SKIP.match(line):
-            out.append(line)
+        if SKIP.match(line):
+            continue
+        if not keep_signatures and SIGNATURE.match(line):
+            continue   # an override has to repeat the signature it overrides
+        out.append(line)
     return out
 
 
 def windows(lines):
+    """Yield each run of WINDOW lines that is long enough to carry expression.
+
+    A run whose lines total fewer than MIN_WINDOW_CHARS characters is a sequence of idioms such as
+    "return true;" / "break;" / "default:" and is not counted.
+    """
     for i in range(len(lines) - WINDOW + 1):
-        yield "\n".join(lines[i:i + WINDOW])
+        run = lines[i:i + WINDOW]
+        if sum(len(x) for x in run) >= MIN_WINDOW_CHARS:
+            yield "\n".join(run)
 
 
 def h(s):
