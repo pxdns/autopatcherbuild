@@ -1,0 +1,125 @@
+name: Build patcher package
+
+# Builds the per-version patcher package (a single Setup.jar) from the private patcher repo and publishes it as a
+# GitHub Release in THIS repository. The package never contains Mojang's client jar: the person who runs it supplies
+# their own. Needs the PATCHER_TOKEN secret (see docs/SETUP.md).
+#
+# Run it by hand: Actions > Build patcher package > Run workflow. Nothing else triggers it, so a pull request can
+# never run this workflow with the secret.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Target version. 26.2 is the first one expected to build; the others need their descriptor and base patches finished in the private repo."
+        type: choice
+        options: ["26.2", "26.3", "1.16.5"]
+        default: "26.2"
+      patcher_ref:
+        description: "Branch, tag or commit of the private patcher repo"
+        default: "main"
+      publish:
+        description: "Publish a release when the build succeeds"
+        type: boolean
+        default: true
+
+concurrency:
+  group: build-patcher-${{ inputs.target }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write          # only to create the release
+    steps:
+      - name: Check the access token is set
+        env:
+          PATCHER_TOKEN: ${{ secrets.PATCHER_TOKEN }}
+        run: |
+          if [ -z "$PATCHER_TOKEN" ]; then
+            echo "::error::The PATCHER_TOKEN secret is not set. See docs/SETUP.md."
+            exit 1
+          fi
+
+      - name: Check out this repository
+        uses: actions/checkout@v7
+
+      - name: Check out the private patcher (only the part the package needs)
+        uses: actions/checkout@v7
+        with:
+          repository: pxdns/patcher
+          ref: ${{ inputs.patcher_ref }}
+          token: ${{ secrets.PATCHER_TOKEN }}
+          path: patcher
+          persist-credentials: false      # the token is not left in the checkout's git config
+          fetch-depth: 1
+          sparse-checkout: src/patcher
+          sparse-checkout-cone-mode: true
+
+      - name: Show the target descriptor
+        run: |
+          test -f "patcher/src/patcher/targets/${{ inputs.target }}.json" || { echo "::error::No descriptor for ${{ inputs.target }} in the patcher repo"; exit 1; }
+          python3 - "patcher/src/patcher/targets/${{ inputs.target }}.json" <<'PY'
+          import json, sys
+          d = json.load(open(sys.argv[1]))
+          print("target:", d.get("targetId"), "| skeleton:", d.get("skeleton", {}).get("status"), "| source patch sets:", len(d.get("sourcePatchSets", [])))
+          if d.get("skeleton", {}).get("status", "").startswith("pending") or not d.get("sourcePatchSets"):
+              print("::warning::This target is not finished in the patcher repo (pending skeleton or no source patch sets); the build is expected to fail or produce an incomplete package.")
+          PY
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Build the patcher command-line and GUI jars
+        run: bash patcher/src/patcher/java-cli/build.sh
+
+      - name: Verify the target against Mojang's official jar (the jar stays on the runner)
+        run: |
+          bash scripts/fetch-jar.sh "${{ inputs.target }}"
+          java -jar patcher/src/patcher/java-cli/build/eaglercraft-26.2-java-cli.jar verify-target \
+            --descriptor "patcher/src/patcher/targets/${{ inputs.target }}.json" \
+            --jar "build-inputs/minecraft-${{ inputs.target }}-client.jar"
+
+      - name: Assemble the portable kit
+        run: bash patcher/src/patcher/java-cli/make-portable.sh "$RUNNER_TEMP/kit"
+
+      - name: Seal it into a single Setup.jar
+        run: |
+          mkdir -p dist
+          bash patcher/src/patcher/java-cli/make-single-file.sh --release --kit "$RUNNER_TEMP/kit" "dist/Eaglercraft-${{ inputs.target }}-Setup.jar"
+          cd dist
+          sha256sum "Eaglercraft-${{ inputs.target }}-Setup.jar" | tee "Eaglercraft-${{ inputs.target }}-Setup.jar.sha256"
+          ls -la
+
+      - name: Check that no Minecraft jar ended up in the package
+        run: |
+          jar_file="dist/Eaglercraft-${{ inputs.target }}-Setup.jar"
+          unzip -p "$jar_file" portable-kit.zip > "$RUNNER_TEMP/portable-kit.zip"     # the kit is a zip inside the jar
+          for listing in "$jar_file" "$RUNNER_TEMP/portable-kit.zip"; do
+            if unzip -Z1 "$listing" | grep -iE '(^|/)(minecraft[-_.0-9a-z]*client|client)[-_.0-9a-z]*\.jar$'; then
+              echo "::error::An official client jar is inside the package ($listing)"; exit 1
+            fi
+          done
+          echo "no official client jar in the package"
+
+      - name: Publish a release
+        if: ${{ inputs.publish }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          tag="${TARGET}-r${GITHUB_RUN_NUMBER}"
+          sha="$(cut -d' ' -f1 "dist/Eaglercraft-${TARGET}-Setup.jar.sha256")"
+          notes="Patcher package for Minecraft ${TARGET}. Run it with Java 17 or newer and choose your own official Minecraft ${TARGET} client jar; the jar is not included.\n\nSHA-256: ${sha}\n\nBuilt by workflow run ${GITHUB_RUN_ID}."
+          gh release create "$tag" "dist/Eaglercraft-${TARGET}-Setup.jar" "dist/Eaglercraft-${TARGET}-Setup.jar.sha256" \
+            --repo "$GITHUB_REPOSITORY" --title "Minecraft ${TARGET} patcher (r${GITHUB_RUN_NUMBER})" --notes "$(printf "$notes")"

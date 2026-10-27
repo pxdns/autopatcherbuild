@@ -1,0 +1,4 @@
+build-inputs/
+patcher/
+*.jar
+*.log
