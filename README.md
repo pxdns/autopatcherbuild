@@ -3,7 +3,7 @@
 Pick a Minecraft version, download its patcher, run it with **your own** official client jar.
 
 - **What this repo is:** the public side. It holds the build workflow, a small website (`site/`) and the scripts. It holds no secrets and no Minecraft files.
-- **What the build does:** [`build-patcher.yml`](.github/workflows/build-patcher.yml) checks out the private patcher repo (`pxdns/patcher`) with a token kept in an Actions secret, builds that version's patcher package (a single `Setup.jar`), checks that no Minecraft jar is inside it, and publishes it as a **GitHub Release** here.
+- **What the build does:** [`build-patcher.yml`](.github/workflows/build-patcher.yml) checks out the private patcher repo (`pxdns/eaglercraft-26.2`) with a token kept in an Actions secret, builds that version's patcher package (a single `Setup.jar`), checks that no Minecraft jar is inside it, and publishes it as a **GitHub Release** here.
 - **What it does not do:** it never stores or publishes Mojang's client jar or a built client. The official jar is downloaded on the runner only to verify the target descriptor, and is thrown away with the runner.
 
 ## Status

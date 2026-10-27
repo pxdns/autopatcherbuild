@@ -1,6 +1,6 @@
 name: Build patcher package
 
-# Builds the per-version patcher package (a single Setup.jar) from the private patcher repo and publishes it as a
+# Builds the per-version patcher package (a single Setup.jar) from the private eaglercraft-26.2 repo and publishes it as a
 # GitHub Release in THIS repository. The package never contains Mojang's client jar: the person who runs it supplies
 # their own. Needs the PATCHER_TOKEN secret (see docs/SETUP.md).
 #
@@ -15,7 +15,7 @@ on:
         options: ["26.2", "26.3", "1.16.5"]
         default: "26.2"
       patcher_ref:
-        description: "Branch, tag or commit of the private patcher repo"
+        description: "Branch, tag or commit of the private eaglercraft-26.2 repo"
         default: "main"
       publish:
         description: "Publish a release when the build succeeds"
@@ -51,7 +51,7 @@ jobs:
       - name: Check out the private patcher (only the part the package needs)
         uses: actions/checkout@v7
         with:
-          repository: pxdns/patcher
+          repository: pxdns/eaglercraft-26.2
           ref: ${{ inputs.patcher_ref }}
           token: ${{ secrets.PATCHER_TOKEN }}
           path: patcher

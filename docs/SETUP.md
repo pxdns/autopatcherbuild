@@ -5,7 +5,7 @@ You do these steps once, in the GitHub web interface. They involve a secret, so 
 ## 1. A read-only token for the private repo
 
 1. GitHub > Settings > Developer settings > Personal access tokens > **Fine-grained tokens** > Generate new token.
-2. **Repository access:** only `pxdns/patcher`.
+2. **Repository access:** only `pxdns/eaglercraft-26.2`.
 3. **Permissions:** Repository permissions > **Contents: Read-only**. Nothing else.
 4. Set an expiry (90 days is fine) and copy the token once. Do not paste it into chat, a file or an issue.
 

@@ -1,6 +1,6 @@
 # Working on the autopatcher build repo (pxdns/autopatcherbuild)
 
-Public repo for the website and the build workflow. The patcher source is in the private repo `pxdns/patcher`.
+Public repo for the website and the build workflow. The patcher source is in the private repo `pxdns/eaglercraft-26.2`.
 
 ## Rules
 - Never commit a token, a Minecraft/Mojang jar, decompiled game code, or a built client. Releases hold the patcher package only.
