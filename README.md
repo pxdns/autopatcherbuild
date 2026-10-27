@@ -3,19 +3,17 @@
 Pick a Minecraft version, download its patcher, run it with **your own** official client jar.
 
 - **What this repo is:** the public side. It holds the build workflow, a small website (`site/`) and the scripts. It holds no secrets and no Minecraft files.
-- **What the build does:** [`build-patcher.yml`](.github/workflows/build-patcher.yml) checks out the private patcher repo (`pxdns/eaglercraft-26.2`) with a token kept in an Actions secret, builds that version's patcher package (a single `Setup.jar`), checks that no Minecraft jar is inside it, and publishes it as a **GitHub Release** here.
+- **What the build does:** [`build-patcher.yml`](.github/workflows/build-patcher.yml) checks out the private patcher repo (`pxdns/eaglercraft-26.2`) with a token kept in an Actions secret, builds the patcher jars, checks that no Minecraft jar or game class is inside them, and publishes it as a **GitHub Release** here.
 - **What it does not do:** it never stores or publishes Mojang's client jar or a built client. The official jar is downloaded on the runner only to verify the target descriptor, and is thrown away with the runner.
 
 ## Status
 
 | Version | State |
 | --- | --- |
-| 26.2 | first target; expected to build once `PATCHER_TOKEN` is set |
-| 26.3 | descriptor is still a placeholder in the private repo (base patches not re-pointed yet) |
-| 1.16.5 | in progress in the private repo |
-| 1.14, 1.12 | planned; need a base port first |
+| 26.2 | builds the patcher GUI and CLI jars only (no patch bundle, skeleton or overlay: those are not in the source repo) |
+| 26.3, 1.16.5, 1.14, 1.12 | not started in this build |
 
-**Not yet run.** The workflow was written against the private repo's scripts (`build.sh`, `make-portable.sh`, `make-single-file.sh`) but has never executed, because it needs the secret. Expect the first run to point out something that needs adjusting; each step prints what failed.
+**Run history.** Run 1 failed because the token could not read the wrong repo; run 2 checked out `pxdns/eaglercraft-26.2` but expected a `targets/26.2.json` descriptor that repo does not have. The workflow now only builds `src/patcher/patcher/java-cli/build.sh`; its first run with this design is pending.
 
 ## Setup (once)
 

@@ -26,7 +26,7 @@ The page reads the repo's releases and workflow runs through GitHub's public API
 
 ## 4. Run a build
 
-Actions > **Build patcher package** > Run workflow > pick `26.2`. When it succeeds, a release appears and the site lists it.
+Actions > **Build patcher package** > Run workflow > run it (there is no version choice yet). When it succeeds, a release appears and the site lists it.
 
 ## If a run fails
 
