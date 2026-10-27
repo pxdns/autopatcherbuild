@@ -1,4 +1,13 @@
+<p align="center"><img src="assets/icon.png" width="128" alt="Autopatcher icon"></p>
+
 # Autopatcher build (`pxdns/autopatcherbuild`)
+
+[![License: GPL v3+](https://img.shields.io/badge/license-GPLv3%2B%20with%20Minecraft%20exception-blue)](LICENSE)
+[![Build patcher package](https://github.com/pxdns/autopatcherbuild/actions/workflows/build-patcher.yml/badge.svg)](https://github.com/pxdns/autopatcherbuild/actions/workflows/build-patcher.yml)
+[![Latest release](https://img.shields.io/github/v/release/pxdns/autopatcherbuild?include_prereleases&label=release)](https://github.com/pxdns/autopatcherbuild/releases)
+![Java 17+](https://img.shields.io/badge/java-17%2B-orange)
+![No Minecraft files](https://img.shields.io/badge/contains-no%20Minecraft%20files-brightgreen)
+![Unofficial](https://img.shields.io/badge/not%20affiliated%20with-Mojang%20%2F%20Microsoft-lightgrey)
 
 Pick a Minecraft version, download its patcher, run it with **your own** official client jar.
 
@@ -24,6 +33,10 @@ See [docs/SETUP.md](docs/SETUP.md): create a read-only token for the private rep
 1. Download `Eaglercraft-<version>-Setup.jar` from the [Releases](../../releases) page (or the site).
 2. Run it with Java 17 or newer: `java -jar Eaglercraft-<version>-Setup.jar`.
 3. Choose your own official client jar for that version, then build.
+
+## Licence
+
+GPL-3.0-or-later with an additional permission for combining with Minecraft ([`LICENSE`](LICENSE), [`LICENSE-EXCEPTION.txt`](LICENSE-EXCEPTION.txt)). What the project does and does not contain, and the projects it builds on, are in [`NOTICE.md`](NOTICE.md). Not legal advice.
 
 ## Rules for this repo
 

@@ -11,4 +11,4 @@ Public repo for the website and the build workflow. The patcher source is in the
 - Commit trailers: `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` and the `Claude-Session:` link.
 
 ## State
-- The workflow has not run yet (needs the secret). See README for what is expected to need adjusting.
+- The workflow runs (26.2 jars released as 26.2-r4). Licence: GPL-3.0-or-later with a Minecraft exception. Next: per-version patchers (1.16.5, 1.21.11, 1.14, 1.12); no 1.18.2 for now.
