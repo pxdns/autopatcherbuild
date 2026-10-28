@@ -7,6 +7,11 @@ def load(p):
         if not m.startswith("#") and not m.startswith("lambda#") and not m.startswith("$values"): r[c.split("$")[0]]+=1
     return r
 van=load("sig-van.txt")
+# every (class, name+params) that still exists in the workspace: a delete of a method whose twin (e.g. an unflagged bridge with another return type) survives would remove the real method
+wsm=set()
+for l in open("sig-ws.txt",encoding="utf-8"):
+    t=l.rstrip("\n").split("\t",2)
+    if len(t)==3 and not t[1].startswith(("#","lambda#","$values")) and ")" in t[1]: wsm.add((t[0],t[1][:t[1].index(")")+1]))
 lib=("com/mojang/brigadier","com/mojang/authlib","com/mojang/datafixers","com/mojang/bridge")
 chg=collections.Counter()
 for c,v in d["modified"].items(): chg[c.split("$")[0]]+=len(v["methods_changed"])+len(v["methods_removed"])
@@ -24,9 +29,13 @@ with open("delta.tsv","w") as f:
     for c,v in d["modified"].items():
         if c.split("$")[0] in whole: continue
         addf={x.split(":")[0] for x in v["fields_added"]}
+        # method keys are name(params)ret; a delete is dropped when the same name+params is added or replaced (return type changed)
+        np=lambda m:m[:m.index(")")+1]
+        addm={np(x) for x in v["methods_added"]+v["methods_changed"]}
         for k,m in (("method-replace","methods_changed"),("method-add","methods_added"),("method-delete","methods_removed"),("field-add","fields_added"),("field-delete","fields_removed")):
             for x in v[m]:
                 if k=="field-delete" and x.split(":")[0] in addf: continue
+                if k=="method-delete" and ((c,np(x)) in wsm or np(x) in addm): continue
                 if k=="method-delete" and (re.search(r"[(,]1[,)]",x) or "$" in x.split("(")[0]): continue
                 f.write(f"{c}\t{k}\t{x}\n")
 print("replace-file",len(whole))

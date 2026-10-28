@@ -71,7 +71,7 @@ public class BundleExport {
         Map<String,List<String[]>> byFile=new TreeMap<>();
         for(String[] r:rows){ String cls=r[0]; String top=cls.contains("$")?cls.substring(0,cls.indexOf('$')):cls; byFile.computeIfAbsent(top,k->new ArrayList<>()).add(r); }
         JavaParser jp=new JavaParser(new ParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_17).setAttributeComments(true));
-        int ops=0,whole=0,unres=0;
+        int ops=0,whole=0,unres=0; Set<String> enumDone=new HashSet<>();
         for(Map.Entry<String,List<String[]>> e:byFile.entrySet()){
             String top=e.getKey(); List<String[]> rs=e.getValue();
             // class-level ops
@@ -129,6 +129,10 @@ public class BundleExport {
                 TypeDeclaration<?> t=td.get();
                 if(kind.startsWith("field-")){
                     String fname=key.substring(0,key.indexOf(':'));
+                    if(t instanceof EnumDeclaration && ((EnumDeclaration)t).getEntries().stream().anyMatch(en->en.getNameAsString().equals(fname))){
+                        if(enumDone.add(cls)){ String txt=((EnumDeclaration)t).getEntries().stream().map(Object::toString).collect(Collectors.joining(",\n")); out.println("{\"op\":\"enum-constants-replace\",\"class\":"+esc(cls)+",\"text\":"+esc(txt)+"}"); ops++; }
+                        continue;
+                    }
                     Optional<FieldDeclaration> fd=t.getFields().stream().filter(x->x.getVariables().stream().anyMatch(v->v.getNameAsString().equals(fname))).findFirst();
                     if(kind.equals("field-add")){ if(fd.isPresent()){ out.println("{\"op\":\"field-add\",\"class\":"+esc(cls)+",\"name\":"+esc(fname)+",\"text\":"+esc(fd.get().toString())+"}"); ops++; } else { rep.println("NOFIELD "+cls+" "+fname); unres++; } }
                     else { out.println("{\"op\":\"field-delete\",\"class\":"+esc(cls)+",\"name\":"+esc(fname)+"}"); ops++; }

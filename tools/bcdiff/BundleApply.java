@@ -67,7 +67,7 @@ public class BundleApply {
             boolean changed=false;
             for(Map<String,String> o:mem){
                 String op=o.get("op"),cls=o.get("class");
-                if(op.equals("imports")){ for(String imp:o.get("imports").split("\n")){ imp=imp.trim(); if(imp.isEmpty()) continue; Matcher m=Pattern.compile("import\\s+(static\\s+)?([\\w.*]+);").matcher(imp); if(!m.matches()) continue; boolean st=m.group(1)!=null; String nm=m.group(2); boolean has=cu.getImports().stream().anyMatch(i2->i2.getNameAsString().equals(nm.replace(".*",""))&&i2.isStatic()==st&&i2.isAsterisk()==nm.endsWith(".*")); if(!has){ if(!st&&!nm.endsWith(".*")){ String sn=nm.substring(nm.lastIndexOf('.')+1); List<ImportDeclaration> clash=cu.getImports().stream().filter(i2->!i2.isStatic()&&!i2.isAsterisk()&&i2.getNameAsString().endsWith("."+sn)).collect(Collectors.toList()); for(ImportDeclaration c2:clash) c2.remove(); } cu.addImport(nm.replace(".*",""),st,nm.endsWith(".*")); changed=true; } } continue; }
+                if(op.equals("imports")){ for(String imp:o.get("imports").split("\n")){ imp=imp.trim(); if(imp.isEmpty()) continue; Matcher m=Pattern.compile("import\\s+(static\\s+)?([\\w.*]+);").matcher(imp); if(!m.matches()) continue; boolean st=m.group(1)!=null; String nm=m.group(2); boolean has=cu.getImports().stream().anyMatch(i2->i2.getNameAsString().equals(nm.replace(".*",""))&&i2.isStatic()==st&&i2.isAsterisk()==nm.endsWith(".*")); if(!has){ if(!st&&!nm.endsWith(".*")){ String sn=nm.substring(nm.lastIndexOf('.')+1); List<ImportDeclaration> clash=cu.getImports().stream().filter(i2->!i2.isStatic()&&!i2.isAsterisk()&&i2.getNameAsString().endsWith("."+sn)).collect(Collectors.toList()); for(ImportDeclaration c2:clash) c2.remove(); } cu.getImports().add(new ImportDeclaration(nm.replace(".*",""),st,nm.endsWith(".*"))); changed=true; } } continue; }
                 if(op.equals("delete-class")){ Optional<TypeDeclaration<?>> td=findType(cu,top,cls); if(td.isPresent()){ td.get().remove(); applied++; changed=true; } else { rep.println("NOTYPE "+cls); failed++; } continue; }
                 Optional<TypeDeclaration<?>> td=findType(cu,top,cls);
                 if(td.isEmpty()){ rep.println("NOTYPE "+cls+" ("+op+")"); failed++; continue; }
@@ -75,6 +75,12 @@ public class BundleApply {
                 try{
                 switch(op){
                     case "field-add": { String name=o.get("name"); ParseResult<BodyDeclaration<?>> r=jp.parseBodyDeclaration(o.get("text")); if(!r.isSuccessful()){rep.println("PARSE-FIELD "+cls+" "+name);failed++;break;} Optional<FieldDeclaration> ex=t.getFields().stream().filter(x->x.getVariables().stream().anyMatch(v->v.getNameAsString().equals(name))).findFirst(); if(ex.isPresent()) ex.get().replace(r.getResult().get()); else t.addMember(r.getResult().get()); applied++; changed=true; break; }
+                    case "enum-constants-replace": {
+                        if(!(t instanceof EnumDeclaration)){ rep.println("NOT-ENUM "+cls); failed++; break; }
+                        ParseResult<CompilationUnit> w=jp.parse("enum W {\n"+o.get("text")+";\n}"); if(!w.isSuccessful()){ rep.println("PARSE-ENUM "+cls); failed++; break; }
+                        EnumDeclaration ed=(EnumDeclaration)t; EnumDeclaration nw=(EnumDeclaration)w.getResult().get().getType(0);
+                        ed.getEntries().clear(); for(EnumConstantDeclaration en:nw.getEntries()) ed.getEntries().add(en.clone());
+                        applied++; changed=true; break; }
                     case "field-delete": { String name=o.get("name"); Optional<FieldDeclaration> ex=t.getFields().stream().filter(x->x.getVariables().stream().anyMatch(v->v.getNameAsString().equals(name))).findFirst(); if(ex.isPresent()){ ex.get().remove(); applied++; changed=true; } else { rep.println("BENIGN-NOFIELD-DEL "+cls+" "+name); } break; }
                     case "method-delete": case "method-replace": case "method-add": {
                         String name=o.get("name"),params=o.get("params"); CallableDeclaration<?> found=null; int cnt=0;
@@ -102,7 +108,11 @@ public class BundleApply {
             }
             if(changed){ String outText; try{ outText=LexicalPreservingPrinter.print(cu); }catch(Exception px){ outText=cu.toString(); rep.println("PLAINPRINT "+top); } Files.writeString(f,outText,StandardCharsets.UTF_8); filesTouched++; }
         }
+        // imports of deleted top-level classes would no longer resolve: drop them everywhere
+        Set<String> gone=new HashSet<>(); for(Map<String,String> o:ops) if(o.get("op").equals("delete-class")&&!o.get("class").contains("$")) gone.add("import "+o.get("class").replace('/','.')+";");
+        int cleaned=0;
+        if(!gone.isEmpty()){ try(Stream<Path> w=Files.walk(root)){ for(Path pth:(Iterable<Path>)w.filter(x->x.toString().endsWith(".java"))::iterator){ List<String> ls=Files.readAllLines(pth,StandardCharsets.UTF_8); List<String> kept=ls.stream().filter(l->!gone.contains(l.trim())).collect(Collectors.toList()); if(kept.size()!=ls.size()){ Files.write(pth,kept,StandardCharsets.UTF_8); cleaned++; } } } }
         rep.close();
-        System.out.println("applied="+applied+" failed="+failed+" filesTouched="+filesTouched);
+        System.out.println("importsCleanedFiles="+cleaned+" applied="+applied+" failed="+failed+" filesTouched="+filesTouched);
     }
 }
