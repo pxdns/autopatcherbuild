@@ -39,9 +39,9 @@ footer{color:var(--dim);font-size:13px;margin-top:32px}
   var VERSIONS=[
     {id:"26.2",note:"First target; the patcher package builds from the private repo."},
     {id:"26.3",note:"In progress: base patches are being re-pointed at 26.3."},
-    {id:"1.16.5",note:"In progress."},
-    {id:"1.14",note:"Planned: needs a base port first."},
-    {id:"1.12",note:"Planned: needs a base port first."}
+    {id:"1.16.5",note:"In progress: patcher being rebuilt from the existing 1.16.5 port."},
+    {id:"1.14",note:"In progress: patcher being reverse-engineered from the existing 1.14 workspace."},
+    {id:"1.12",note:"In progress: patcher being reverse-engineered from the existing 1.12 source."}
   ];
   var list=document.getElementById("list");
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]});}
