@@ -19,7 +19,7 @@ In `pxdns/autopatcherbuild`: Settings > Secrets and variables > Actions > **New 
 
 The page is the single file `site/index.html`. Two easy ways to host it:
 
-- **GitHub Pages:** Pages only serves the repo root or a `docs/` folder, so copy `site/index.html` to `docs/index.html` (or ask me to) and set Settings > Pages > Source to `main` / `docs`.
+- **GitHub Pages:** Pages only serves the repo root or a `docs/` folder, so `docs/index.html` is a copy of `site/index.html` (keep them in sync). Set Settings > Pages > Source to `main` / `docs`.
 - **Vercel:** import the repo and set the root directory to `site/`.
 
 The page reads the repo's releases and workflow runs through GitHub's public API from the visitor's browser, so **the repo must be public** for the status line and download buttons to work. It needs no token.
