@@ -1,7 +1,5 @@
-net/lax1dude/eaglercraft/EaglercraftRandom	java/util/Random
 net/lax1dude/eaglercraft/Random	java/util/Random
 net/lax1dude/eaglercraft/ThreadLocalRandom	java/util/concurrent/ThreadLocalRandom
-net/lax1dude/eaglercraft/EaglercraftUUID	java/util/UUID
 net/lax1dude/eaglercraft/Base64	java/util/Base64
 net/lax1dude/eaglercraft/IOUtils	org/apache/commons/io/IOUtils
 net/eymenwsmc/java/CompletionException	java/util/concurrent/CompletionException

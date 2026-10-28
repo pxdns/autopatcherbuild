@@ -78,10 +78,11 @@ public class BcSig {
         for(Map.Entry<String,byte[]> e:classes.entrySet()){
             boolean ok=prefixes.isEmpty(); for(String p:prefixes) if(e.getKey().startsWith(p)) ok=true; if(!ok) continue;
             ClassNode cn=new ClassNode(); new ClassReader(e.getValue()).accept(cn,ClassReader.SKIP_FRAMES|ClassReader.SKIP_DEBUG);
-            out.println(cn.name+"\t#class\t"+(cn.superName==null?"":cn.superName)+" "+String.join(",",cn.interfaces)+" "+(cn.access&~Opcodes.ACC_SUPER&~Opcodes.ACC_SYNTHETIC));
+            List<String> ifs=new ArrayList<>(cn.interfaces); Collections.sort(ifs); out.println(cn.name+"\t#class\t"+rn((cn.superName==null?"":cn.superName)+" "+String.join(",",ifs),ren)+" "+(cn.access&~Opcodes.ACC_SUPER&~Opcodes.ACC_SYNTHETIC&~Opcodes.ACC_FINAL));
             List<String> fs=new ArrayList<>(); for(FieldNode fn:cn.fields) if((fn.access&Opcodes.ACC_SYNTHETIC)==0) fs.add(fn.name+":"+fn.desc+":"+(fn.access&~Opcodes.ACC_SYNTHETIC)+":"+fn.value);
             for(String s:fs) out.println(cn.name+"\t#field\t"+s);
             for(MethodNode mn:cn.methods){
+                if((mn.access&Opcodes.ACC_BRIDGE)!=0||mn.name.startsWith("access$")) continue;
                 String sbs=body(mn,bodyHash,ren);
                 int acc=mn.access&~Opcodes.ACC_SYNTHETIC&~Opcodes.ACC_BRIDGE&~Opcodes.ACC_VARARGS;
                 String h=hex(MessageDigest.getInstance("SHA-1").digest(sbs.getBytes(StandardCharsets.UTF_8)));
