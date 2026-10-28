@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Privacy &middot; Autopatcher</title>
+<meta name="description" content="What this website and the patcher collect.">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<header><div class="bar"><a class="brand" href="index.html"><img src="img/icon.png" alt=""><span>Autopatcher</span></a><a class="l" href="index.html">Home</a><a class="l" href="versions.html">Versions</a><a class="l" href="guide.html">Guide</a><a class="l" href="credits.html">Credits</a><a class="l" href="legal.html" aria-current="page">Legal</a><button class="theme" id="theme" type="button">Dark theme</button></div></header>
+<main>
+<nav class="subnav" aria-label="Legal pages"><a href="legal.html">Overview</a><a href="licence.html">Licence</a><a href="dmca.html">Copyright / DMCA</a><a href="privacy.html" aria-current="page">Privacy</a></nav>
+<section class="intro"><div class="eyebrow">Legal</div><h1>Privacy</h1>
+<p class="lead" style="margin:0">Last updated 28 October 2026. Short version: this site keeps no accounts and no tracking.</p></section>
+
+<h2>This website</h2>
+<ul>
+<li><b>No accounts, no cookies, no analytics, no advertising.</b> The site is static files.</li>
+<li><b>Hosting.</b> It is served by Vercel, which keeps ordinary server logs (such as your IP address and the page requested) under its own privacy policy.</li>
+<li><b>GitHub.</b> The Versions page and the build-status bar fetch data from the GitHub API (<code>api.github.com</code>) in your browser, so GitHub sees your IP address and browser details, under its own privacy policy. Downloads come from GitHub Releases.</li>
+<li><b>Your browser.</b> If you press the theme button, your choice (&ldquo;light&rdquo; or &ldquo;dark&rdquo;) is saved in your browser's local storage. It is never sent anywhere.</li>
+</ul>
+
+<h2>The patcher</h2>
+<ul>
+<li>It runs on your computer. Your client jar and what you build stay on your computer and are never uploaded to us.</li>
+<li>To build, it downloads Mojang's official client jar and mappings directly from Mojang's servers, which see the request as they would for any download.</li>
+</ul>
+
+<h2>Contact</h2>
+<p>Questions about this policy: open an issue on the <a href="https://github.com/pxdns/autopatcherbuild/issues">issue tracker</a>.</p>
+
+</main>
+<footer><div class="in"><span>Created by murd.er. Not affiliated with Mojang or Microsoft. Minecraft is a trademark of Mojang Studios.</span><span><a href="credits.html">Credits</a> &middot; <a href="licence.html">Licence</a> &middot; <a href="dmca.html">Copyright / DMCA</a> &middot; <a href="privacy.html">Privacy</a> &middot; <a href="https://github.com/pxdns/autopatcherbuild">Source</a></span></div></footer>
+<script src="app.js"></script>
+</body></html>
