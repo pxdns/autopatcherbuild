@@ -1,6 +1,6 @@
 """Fails if a patch bundle contains text copied from the game's decompiled source.
 
-The bundle (eaglercraft-java-source-patch-bundle v1) stores new files in full and changed files as byte-span
+The bundle (eaglercraft-java-source-patch-bundle v1 or v2) stores new files in full and changed files as byte-span
 deltas whose only text is the inserted bytes (removed bytes are hashes). This tool pulls out every piece of text the
 bundle would publish and compares it with the base tree, which only ever exists on the machine running the check.
 
@@ -64,12 +64,22 @@ def bundle_texts(bundle):
         if op["op"] == "delete":
             continue
         path = os.path.join(bundle, op["payload"])
-        if op["op"] == "add":
+        if op["op"] == "add" and op.get("payload_kind") == "parts-v2":
+            # v2: a reference to base bytes is not text the bundle publishes; every text part is scanned on its own
+            for part in json.load(open(path))["parts"]:
+                if part["t"] == "b64":
+                    yield op["path"], base64.b64decode(part["d"]).decode("utf-8", "replace")
+        elif op["op"] == "add":
             yield op["path"], open(path, "rb").read().decode("utf-8", "replace")
         else:
             delta = json.load(open(path))
             for hunk in delta["hunks"]:
-                yield op["path"], base64.b64decode(hunk["insert_b64"]).decode("utf-8", "replace")
+                if "insert_parts" in hunk:
+                    for part in hunk["insert_parts"]:
+                        if part["t"] == "b64":
+                            yield op["path"], base64.b64decode(part["d"]).decode("utf-8", "replace")
+                else:
+                    yield op["path"], base64.b64decode(hunk["insert_b64"]).decode("utf-8", "replace")
 
 
 def main():
