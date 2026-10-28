@@ -1,6 +1,6 @@
 <p align="center"><img src="assets/icon.png" width="128" alt="Autopatcher icon"></p>
 
-# Autopatcher build (`pxdns/autopatcherbuild`)
+# Autopatcher build 
 
 [![License: GPL v3+](https://img.shields.io/badge/license-GPLv3%2B%20with%20Minecraft%20exception-blue)](LICENSE)
 [![Build patcher package](https://github.com/pxdns/autopatcherbuild/actions/workflows/build-patcher.yml/badge.svg)](https://github.com/pxdns/autopatcherbuild/actions/workflows/build-patcher.yml)
