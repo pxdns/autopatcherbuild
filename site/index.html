@@ -1,79 +1,32 @@
 <!doctype html>
 <html lang="en"><head>
-<link rel="icon" type="image/png" href="favicon.png"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Autopatcher</title>
 <meta name="description" content="Pick a Minecraft version, download its patcher, and run it with your own official client jar.">
-<style>
-:root{--bg:#05070d;--panel:#0c1018;--line:#1d2432;--text:#e8ecf4;--dim:#98a2b8;--accent:#5caaff;--ok:#48d670;--warn:#f0c840;--bad:#e04040}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f6f7fa;--panel:#fff;--line:#dde2ec;--text:#161b26;--dim:#5b667d;--accent:#1d6fd6;--ok:#1e9d4a;--warn:#a87b00;--bad:#c02828}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
-main{max-width:760px;margin:0 auto;padding:40px 16px 64px}
-h1{font-size:28px;margin:0 0 6px}p.lead{color:var(--dim);margin:0 0 28px}
-.status{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:12px 16px;margin-bottom:22px;font-size:14px}
-.dot{width:10px;height:10px;border-radius:50%;background:var(--dim)}.dot.run{background:var(--warn);animation:p 1.2s ease-in-out infinite}.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}
-@keyframes p{50%{opacity:.35}}
-.card{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:16px;margin-bottom:12px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.card h2{font-size:18px;margin:0}.card small{color:var(--dim);display:block;margin-top:2px;word-break:break-all}
-.badge{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 10px;color:var(--dim);margin-left:8px;vertical-align:middle}
-a.btn{background:var(--accent);color:#fff;text-decoration:none;padding:9px 16px;border-radius:9px;font-weight:600;font-size:14px}
-.btn.off{background:transparent;border:1px solid var(--line);color:var(--dim);pointer-events:none}
-ol{color:var(--dim);padding-left:20px}ol b{color:var(--text)}code{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:0 5px}
-footer{color:var(--dim);font-size:13px;margin-top:32px}
-</style></head><body><main>
-<h1>Autopatcher</h1>
-<p class="lead">Pick a version, download its patcher, and run it with your own official Minecraft client jar. The jar is never included and never uploaded.</p>
-<div class="status" id="status"><span class="dot" id="dot"></span><span id="status-text">Checking build status&hellip;</span></div>
-<div id="list"></div>
-<h3>How to use it</h3>
-<ol>
-<li><b>Download</b> the patcher for your version below.</li>
-<li><b>Run</b> it with Java 17 or newer: <code>java -jar Eaglercraft-java -jar Eaglercraft-&lt;version&gt;-Setup.jarlt;versionjava -jar Eaglercraft-&lt;version&gt;-Setup.jargt;-patcher-gui.jar</code>.</li>
-<li><b>Choose</b> your own official client jar for that version when it asks. You need a copy of the game you are allowed to use.</li>
-<li><b>Build</b> a standalone page or a source project from the same window.</li>
-</ol>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+</head><body data-bg="1.14">
+<div class="bg" aria-hidden="true"></div>
+<header><nav class="glass"><a class="brand" href="index.html"><img src="img/icon.png" alt=""><span>Autopatcher</span></a><a class="l" href="index.html" aria-current="page">Home</a><a class="l" href="versions.html">Versions</a><a class="l" href="guide.html">Guide</a><a class="l" href="about.html">About</a></nav></header>
+<main>
+
+<section class="hero glass">
+<span class="eyebrow">Eaglercraft patchers</span>
+<h1>Your jar in.<br>A browser client out.</h1>
+<p class="lead">Pick a Minecraft version, download its patcher, and run it with your own official client jar. The jar is never included and never uploaded.</p>
+<div class="row"><a class="btn" href="versions.html">Choose a version</a><a class="btn ghost" href="guide.html">How it works</a></div>
+</section>
+<div class="status glass"><span class="dot" id="dot"></span><span id="status-text">Checking build status&hellip;</span></div>
+<div class="tiles">
+<div class="tile glass"><div class="ic">&#128273;</div><h2>Bring your own jar</h2><p>You supply the official client for your version. Nothing from Mojang is hosted here.</p></div>
+<div class="tile glass"><div class="ic">&#129521;</div><h2>One small package</h2><p>Each release holds only the patcher. It builds the client on your machine.</p></div>
+<div class="tile glass"><div class="ic">&#128194;</div><h2>Page or project</h2><p>Build a standalone page, or a source project to keep working on.</p></div>
+</div>
+<h2 style="margin:26px 4px 12px">Latest versions</h2>
+<div class="grid" id="list" data-limit="3"></div>
+<div class="row" style="margin-top:16px"><a class="btn ghost" href="versions.html">All versions</a></div>
+
+</main>
 <footer>Not affiliated with Mojang or Microsoft. Minecraft is a trademark of Mojang Studios. Check each package's notices before sharing it.</footer>
-<script>
-(function(){
-  var REPO="pxdns/autopatcherbuild";
-  // version -> what we can honestly say about it today
-  var VERSIONS=[
-    {id:"26.2",note:"First target; the patcher package builds from the private repo."},
-    {id:"26.3",note:"In progress: base patches are being re-pointed at 26.3."},
-    {id:"1.16.5",note:"In progress: patcher being rebuilt from the existing 1.16.5 port."},
-    {id:"1.14",note:"In progress: patcher being reverse-engineered from the existing 1.14 workspace."},
-    {id:"1.12",note:"In progress: patcher being reverse-engineered from the existing 1.12 source."}
-  ];
-  var list=document.getElementById("list");
-  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]});}
-  function render(releases){
-    var latest={};
-    (releases||[]).forEach(function(r){
-      var m=/^(.+)-r\d+$/.exec(r.tag_name||""); if(!m||latest[m[1]]||r.draft) return;
-      var jar=(r.assets||[]).filter(function(a){return /\.jar$/.test(a.name);})[0];
-      if(jar) latest[m[1]]={url:jar.browser_download_url,name:jar.name,size:jar.size,when:r.published_at,tag:r.tag_name};
-    });
-    list.innerHTML=VERSIONS.map(function(v){
-      var rel=latest[v.id];
-      var right=rel?'<a class="btn" href="'+esc(rel.url)+'">Download</a>':'<a class="btn off">Not available yet</a>';
-      var sub=rel?esc(rel.name)+" &middot; "+(rel.size/1048576).toFixed(0)+" MB &middot; "+esc(rel.tag)+" &middot; "+new Date(rel.when).toLocaleDateString():esc(v.note);
-      return '<div class="card"><div><h2>Minecraft '+esc(v.id)+'<span class="badge">'+(rel?"ready":"not ready")+'</span></h2><small>'+sub+'</small></div>'+right+'</div>';
-    }).join("");
-  }
-  function status(runs){
-    var dot=document.getElementById("dot"),t=document.getElementById("status-text");
-    var r=(runs||[])[0];
-    if(!r){t.textContent="No builds have run yet.";return;}
-    var when=new Date(r.created_at).toLocaleString();
-    if(r.status!=="completed"){dot.className="dot run";t.textContent="Building now (started "+when+")… this page updates itself.";return;}
-    if(r.conclusion==="success"){dot.className="dot ok";t.textContent="Last build succeeded ("+when+").";}
-    else{dot.className="dot bad";t.textContent="Last build "+(r.conclusion||"failed")+" ("+when+").";}
-  }
-  function get(path){return fetch("https://api.github.com/repos/"+REPO+path,{headers:{Accept:"application/vnd.github+json"}}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json();});}
-  function refresh(){
-    get("/releases?per_page=30").then(render).catch(function(){render([]);});
-    get("/actions/workflows/build-patcher.yml/runs?per_page=1").then(function(d){status(d.workflow_runs);}).catch(function(){document.getElementById("status-text").textContent="Build status is not available right now.";});
-  }
-  refresh(); setInterval(refresh,60000);
-})();
-</script>
-</main></body></html>
+<script src="app.js"></script>
+</body></html>
