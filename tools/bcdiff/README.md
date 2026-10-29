@@ -67,3 +67,28 @@ classes) raised 1.14 errors to 6,545 and broke 1,510 operations.
 
 Not done: zero-error compile, then a bytecode comparison of the compiled patched tree against the workspace, a skeleton and a
 build for either version, any browser test. The 1.12 workspace has no web build at all (its README says so).
+
+## Round 3 (2026-10-29): generic signatures, nested classes, import cleanup, name repair
+
+New: `BcSig` also compares generic signatures (a changed `Optional<UUID>` is invisible in descriptors); `BundleExport`/`BundleApply`
+carry added nested classes (`type-add`); `fix_bad_imports.py` deletes imports javac cannot resolve (the workspace dropped the
+library with the code that used it); `fix_by_alignment.py` repairs decompiler variable names by aligning each file with the
+workspace source of the same class (names only; nothing is copied; local alignment between the nearest aligned tokens as a
+fallback); `fixpass.sh <112|114>` runs assemble, compile, fixers, compile and prints each stage.
+
+Measured (compile errors of the patched tree, vanilla decompile + member operations + workspace platform code):
+
+| Version | Start of round 2 | Now | Remaining causes |
+| --- | --- | --- | --- |
+| 1.12 (OptiFine and shaders excluded) | 493 | 131 | wrong declared types, places where the workspace code really differs |
+| 1.14 | 1,592 | 385 | variables bound to the wrong name where text alignment is ambiguous, 66 unresolved operation spots, enum constructors, generic inference |
+
+Experiment: decompile the workspace's own compiled classes with the same Vineflower flags and diff the two decompiles
+(`export --base-refs` on trees, the 1.16.5 route). After stripping `/* $VF was ... */` comments, 14-15% of files are identical and the
+median changed file differs by 9-10 lines (about 80,000 changed lines in total, much of it javac-17-versus-javac-8 noise), so
+real Eagler changes cannot be told apart from compiler noise without the bytecode comparison. Compiled with `-g` and decompiled with
+`-udv=0` the result is worse (1,473 errors). The decompiled-workspace tree has 597 compile errors (generic types lost because the
+classes have no local-variable tables); the 1.16.5 fixers bring it to 418 and stop; the rest is a long tail of single cases.
+
+Conclusion so far: neither route reaches zero errors with scripts alone. The remaining errors need recorded per-case fixes (a
+`compile-fixes.json` like the 26.3 one), which is the same hand-edit tail the 1.16.5 port went through (1,364 errors to 0).

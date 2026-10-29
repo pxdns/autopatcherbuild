@@ -81,6 +81,10 @@ public class BundleApply {
                         EnumDeclaration ed=(EnumDeclaration)t; EnumDeclaration nw=(EnumDeclaration)w.getResult().get().getType(0);
                         ed.getEntries().clear(); for(EnumConstantDeclaration en:nw.getEntries()) ed.getEntries().add(en.clone());
                         applied++; changed=true; break; }
+                    case "type-add": {
+                        ParseResult<BodyDeclaration<?>> r=jp.parseBodyDeclaration(o.get("text")); if(!r.isSuccessful()){ rep.println("PARSE-TYPE "+cls+" "+o.get("name")); failed++; break; }
+                        final String tn=o.get("name"); t.getMembers().removeIf(m->m instanceof TypeDeclaration&&((TypeDeclaration<?>)m).getNameAsString().equals(tn));
+                        t.addMember(r.getResult().get()); applied++; changed=true; break; }
                     case "field-delete": { String name=o.get("name"); Optional<FieldDeclaration> ex=t.getFields().stream().filter(x->x.getVariables().stream().anyMatch(v->v.getNameAsString().equals(name))).findFirst(); if(ex.isPresent()){ ex.get().remove(); applied++; changed=true; } else { rep.println("BENIGN-NOFIELD-DEL "+cls+" "+name); } break; }
                     case "method-delete": case "method-replace": case "method-add": {
                         String name=o.get("name"),params=o.get("params"); CallableDeclaration<?> found=null; int cnt=0;

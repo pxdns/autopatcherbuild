@@ -88,6 +88,19 @@ public class BundleExport {
             boolean topAdded=rs.stream().anyMatch(r->(r[1].equals("add-class")||r[1].equals("replace-file"))&&r[0].equals(top));
             boolean replace=rs.stream().anyMatch(r->r[1].equals("replace-file"));
             List<String> imports=cu.getImports().stream().map(i->i.toString().trim()).collect(Collectors.toList());
+            // named nested classes that exist only in the workspace: carry the whole type
+            Set<String> addedNames=rs.stream().filter(r->r[1].equals("add-class")).map(r->r[0]).collect(Collectors.toSet());
+            for(String ac:addedNames){
+                if(ac.equals(top)||ac.matches(".*\\$\\d.*")) continue;
+                String parentCls=ac.substring(0,ac.lastIndexOf('$'));
+                if(addedNames.contains(parentCls)) continue; // the parent's text already contains it
+                String[] ps=ac.substring(top.length()).split("\\$");
+                String topNm=top.substring(top.lastIndexOf('/')+1);
+                Optional<TypeDeclaration<?>> cur=cu.getTypes().stream().filter(t->t.getNameAsString().equals(topNm)).findFirst().map(t->(TypeDeclaration<?>)t);
+                for(int i=1;i<ps.length&&cur.isPresent();i++){ String nm=ps[i]; cur=cur.get().getMembers().stream().filter(m->m instanceof TypeDeclaration&&((TypeDeclaration<?>)m).getNameAsString().equals(nm)).findFirst().map(m->(TypeDeclaration<?>)m); }
+                if(cur.isEmpty()){ rep.println("NOTYPE-ADD "+ac); unres++; continue; }
+                out.println("{\"op\":\"type-add\",\"class\":"+esc(parentCls)+",\"name\":"+esc(ps[ps.length-1])+",\"text\":"+esc(cur.get().toString())+"}"); ops++;
+            }
             if(topAdded){ out.println("{\"op\":\""+(replace?"replace-file":"add-file")+"\",\"class\":"+esc(top)+",\"text\":"+esc(src)+"}"); ops++; whole++; continue; }
             // collect type vars across the file (class/method level) as wildcards
             Set<String> tv=new HashSet<>(); cu.findAll(TypeParameter.class).forEach(t->tv.add(t.getNameAsString()));

@@ -26,7 +26,7 @@ public class BcSig {
             else if(n instanceof IntInsnNode && n.getOpcode()!=188) t.add("I"+((IntInsnNode)n).operand);
             else if(n.getOpcode()>=2&&n.getOpcode()<=15) t.add("K"+n.getOpcode());
         }
-        Collections.sort(t); List<String> ex=new ArrayList<>(); if(mn.exceptions!=null) for(String e:mn.exceptions) ex.add(rn(e,ren)); Collections.sort(ex); t.add("EXC:"+String.join(",",ex)); return String.join("|",t);
+        Collections.sort(t); List<String> ex=new ArrayList<>(); if(mn.exceptions!=null) for(String e:mn.exceptions) ex.add(rn(e,ren)); Collections.sort(ex); t.add("EXC:"+String.join(",",ex)); t.add("SIG:"+rn(String.valueOf(mn.signature),ren)); return String.join("|",t);
     }
     static String body(MethodNode mn,Map<String,String> bodyHash,List<String[]> ren){
         StringBuilder sb=new StringBuilder();
@@ -78,8 +78,8 @@ public class BcSig {
         for(Map.Entry<String,byte[]> e:classes.entrySet()){
             boolean ok=prefixes.isEmpty(); for(String p:prefixes) if(e.getKey().startsWith(p)) ok=true; if(!ok) continue;
             ClassNode cn=new ClassNode(); new ClassReader(e.getValue()).accept(cn,ClassReader.SKIP_FRAMES|ClassReader.SKIP_DEBUG);
-            List<String> ifs=new ArrayList<>(cn.interfaces); Collections.sort(ifs); out.println(cn.name+"\t#class\t"+rn((cn.superName==null?"":cn.superName)+" "+String.join(",",ifs),ren)+" "+(cn.access&~Opcodes.ACC_SUPER&~Opcodes.ACC_SYNTHETIC&~Opcodes.ACC_FINAL));
-            List<String> fs=new ArrayList<>(); for(FieldNode fn:cn.fields) if((fn.access&Opcodes.ACC_SYNTHETIC)==0) fs.add(fn.name+":"+fn.desc+":"+(fn.access&~Opcodes.ACC_SYNTHETIC)+":"+String.valueOf(fn.value).replaceAll("[\\n\\r\\t]"," "));
+            List<String> ifs=new ArrayList<>(cn.interfaces); Collections.sort(ifs); out.println(cn.name+"\t#class\t"+rn((cn.superName==null?"":cn.superName)+" "+String.join(",",ifs)+" "+String.valueOf(cn.signature),ren)+" "+(cn.access&~Opcodes.ACC_SUPER&~Opcodes.ACC_SYNTHETIC&~Opcodes.ACC_FINAL));
+            List<String> fs=new ArrayList<>(); for(FieldNode fn:cn.fields) if((fn.access&Opcodes.ACC_SYNTHETIC)==0) fs.add(fn.name+":"+fn.desc+":"+(fn.access&~Opcodes.ACC_SYNTHETIC)+":"+String.valueOf(fn.value).replaceAll("[\\n\\r\\t]"," ")+":"+rn(String.valueOf(fn.signature),ren));
             for(String s:fs) out.println(cn.name+"\t#field\t"+s);
             for(MethodNode mn:cn.methods){
                 if((mn.access&Opcodes.ACC_BRIDGE)!=0||mn.name.startsWith("access$")) continue;
