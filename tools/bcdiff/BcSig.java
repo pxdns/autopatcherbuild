@@ -26,7 +26,7 @@ public class BcSig {
             else if(n instanceof IntInsnNode && n.getOpcode()!=188) t.add("I"+((IntInsnNode)n).operand);
             else if(n.getOpcode()>=2&&n.getOpcode()<=15) t.add("K"+n.getOpcode());
         }
-        Collections.sort(t); List<String> ex=new ArrayList<>(); if(mn.exceptions!=null) for(String e:mn.exceptions) ex.add(rn(e,ren)); Collections.sort(ex); t.add("EXC:"+String.join(",",ex)); t.add("SIG:"+rn(String.valueOf(mn.signature),ren)); return String.join("|",t);
+        Collections.sort(t); List<String> ex=new ArrayList<>(); if(mn.exceptions!=null) for(String e:mn.exceptions) ex.add(rn(e,ren)); Collections.sort(ex); t.add("EXC:"+String.join(",",ex)); t.add("SIG:"+rn(String.valueOf(mn.signature),ren)); t.add("ACC:"+(mn.access&~Opcodes.ACC_SYNTHETIC&~Opcodes.ACC_BRIDGE&~Opcodes.ACC_VARARGS)); return String.join("|",t);
     }
     static String body(MethodNode mn,Map<String,String> bodyHash,List<String[]> ren){
         StringBuilder sb=new StringBuilder();

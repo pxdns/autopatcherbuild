@@ -92,3 +92,38 @@ classes have no local-variable tables); the 1.16.5 fixers bring it to 418 and st
 
 Conclusion so far: neither route reaches zero errors with scripts alone. The remaining errors need recorded per-case fixes (a
 `compile-fixes.json` like the 26.3 one), which is the same hand-edit tail the 1.16.5 port went through (1,364 errors to 0).
+
+## Round 4 (2026-10-29): zero compile errors for 1.12 and 1.14
+
+Both patched trees (vanilla decompile + member operations + workspace platform code) now compile with javac 17 with **0 errors**,
+and the result is reproducible from a fresh decompile: `run114b.sh` and `run112b.sh` rebuild the tree, run the fixers, replay the
+recorded edits in `fixes/` and end at `javac errors: 0` (1.14: 81 edits replayed, 0 missing; 1.12: 213 edits replayed, 0 missing).
+
+| Version | Start of round 4 | Now |
+| --- | --- | --- |
+| 1.12 (OptiFine and shaders left out) | 131 | 0 |
+| 1.14 | 385 | 0 |
+
+What changed:
+
+* Exporter/applier bugs found while chasing the last errors: a constructor delete matched the wrong constructor through the
+  enum/inner-class skip offset and removed a replaced one (exact parameter match first now, skip only for enums and inner
+  classes); deletes run before adds (an enum constructor was added and then deleted again).
+* `stmtlib.mask_comments` treated `//` inside a string literal (`"level://"`) as a comment, which mis-tokenised the rest of the file;
+  every statement-based tool was affected.
+* New: `LambdaCaptures` (lambda captured variables from the bytecode), `fix_ctor_prelude.py` (Vineflower hoists argument temporaries
+  above `this(...)`/`super(...)`; they are inlined back), `ed.py`/`applyfixes.py` (recorded token edits), `edgen.py` (one edit per
+  occurrence for renames inside an anonymous class), `ctx.py`/`errs.py`/`sh.sh` (reading the errors).
+* Recorded edits (`fixes/*.jsonl`) carry only: file, hash of the statement's tokens, which occurrence of that hash, the old and new
+  tokens. The longest edit is a handful of tokens (a cast, a type argument, a renamed variable); no statements are stored. The hash
+  alone is ambiguous (identical statements repeat, e.g. `if (var3 != null) {`), hence the occurrence index.
+
+The edits are of five kinds: captured variables in anonymous classes and lambdas bound to the wrong name (about two thirds), casts
+or explicit type arguments the decompiler lost (`ImmutableMap.<K,V>builder()`, `(T)`), annotations/access flags the member
+comparison does not see (`@Override`, `protected` to `public`), raw-type headers (`IObjectIntIterable<V>`), and local variables
+renamed where a decompiled local shadows a captured one.
+
+**What this does not show.** Zero compile errors means the tree type-checks. Not done: comparing the compiled patched tree against the
+workspace bytecode (a wrongly bound variable that happens to have the right type compiles and behaves wrongly), a skeleton and a
+build for either version, any browser test. The 1.12 numbers exclude OptiFine and shader code by design. The 1.12 workspace has no
+web build.

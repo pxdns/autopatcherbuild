@@ -9,4 +9,4 @@ echo "[3] applying them to the fresh decompile"
 rm -rf patched && mkdir patched && cp -r dec2/net dec2/com patched/
 $J/java -Xmx3g -cp "$JP:tool" BundleApply patched ops.jsonl apply-report.txt 2>&1 | grep -v Picked | tail -1
 echo "[4] assemble, compile, run the fixers"
-./fixpass.sh 114
+./fixpass2.sh 114

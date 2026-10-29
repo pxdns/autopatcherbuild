@@ -159,7 +159,8 @@ public class BundleExport {
                 if(mname.equals("<init>")){
                     // inner (non-static) classes get the outer instance as first descriptor param; try both
                     List<ConstructorDeclaration> cs=t.getConstructors();
-                    for(ConstructorDeclaration c:cs){ if(sameParams(dp,c,tv)||(dp.size()==c.getParameters().size()+1&&sameParams(dp.subList(1,dp.size()),c,tv))||(dp.size()>=2&&dp.size()==c.getParameters().size()+2&&t instanceof EnumDeclaration&&sameParams(dp.subList(2,dp.size()),c,tv))){found=c;cnt++;} }
+                    for(ConstructorDeclaration c:cs){ if(sameParams(dp,c,tv)){found=c;cnt++;} }
+                    if(found==null) for(ConstructorDeclaration c:cs){ if((dp.size()==c.getParameters().size()+1&&sameParams(dp.subList(1,dp.size()),c,tv))||(dp.size()>=2&&dp.size()==c.getParameters().size()+2&&t instanceof EnumDeclaration&&sameParams(dp.subList(2,dp.size()),c,tv))){found=c;cnt++;} }
                     if(found==null&&cs.isEmpty()&&(dp.isEmpty()||t instanceof EnumDeclaration)){ emitInit(out,t,cls,false); ops++; continue; }
                 } else {
                     for(MethodDeclaration m:t.getMethodsByName(mname)){ if(sameParams(dp,m,tv)){found=m;cnt++;} }

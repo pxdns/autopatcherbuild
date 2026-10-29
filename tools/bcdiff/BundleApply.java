@@ -29,9 +29,12 @@ public class BundleApply {
     static String simple(String full){ String s=full.substring(full.lastIndexOf('/')+1); return s.substring(s.lastIndexOf('$')+1); }
     static String srcType(Parameter p){ String t=p.getType().asString().replaceAll("<.*>",""); t=t.substring(t.lastIndexOf('.')+1); if(p.isVarArgs()) t+="[]"; return t; }
     static boolean paramsMatch(CallableDeclaration<?> c,String params,Set<String> tv,int skip){
+        return paramsMatch2(c,params,tv,skip,false);
+    }
+    static boolean paramsMatch2(CallableDeclaration<?> c,String params,Set<String> tv,int skip,boolean exactOnly){
         List<String> want=params.isEmpty()?List.of():Arrays.asList(params.split(","));
         List<Parameter> ps=c.getParameters();
-        if(ps.size()!=want.size()-skip&&ps.size()!=want.size()) return false;
+        if(ps.size()!=want.size()&&(exactOnly||ps.size()!=want.size()-skip)) return false;
         int off=ps.size()==want.size()?0:skip;
         for(int i=0;i<ps.size();i++){ String s=srcType(ps.get(i)); if(tv.contains(s.replace("[]",""))) continue; if(!s.equals(want.get(i+off))) return false; }
         return true;
@@ -56,6 +59,7 @@ public class BundleApply {
                 if(o.get("op").equals("delete-class")&&o.get("class").equals(top)){ if(Files.deleteIfExists(f)){applied++;} else {rep.println("DEL-MISSING "+top);} }
                 if(o.get("op").equals("add-file")||o.get("op").equals("replace-file")){ Files.createDirectories(f.getParent()); Files.writeString(f,o.get("text"),StandardCharsets.UTF_8); applied++; }
             }
+            e.getValue().sort(Comparator.comparingInt(o->o.get("op").endsWith("-delete")?0:1));
             List<Map<String,String>> mem=e.getValue().stream().filter(o->!Set.of("delete-class","add-file","replace-file","whole-file-needed").contains(o.get("op"))||(o.get("op").equals("delete-class")&&!o.get("class").equals(top))).collect(Collectors.toList());
             if(mem.isEmpty()) continue;
             if(!Files.exists(f)){ rep.println("NOFILE "+top); failed+=mem.size(); continue; }
@@ -88,7 +92,9 @@ public class BundleApply {
                     case "field-delete": { String name=o.get("name"); Optional<FieldDeclaration> ex=t.getFields().stream().filter(x->x.getVariables().stream().anyMatch(v->v.getNameAsString().equals(name))).findFirst(); if(ex.isPresent()){ ex.get().remove(); applied++; changed=true; } else { rep.println("BENIGN-NOFIELD-DEL "+cls+" "+name); } break; }
                     case "method-delete": case "method-replace": case "method-add": {
                         String name=o.get("name"),params=o.get("params"); CallableDeclaration<?> found=null; int cnt=0;
-                        if(name.equals("<init>")){ for(ConstructorDeclaration c:t.getConstructors()) if(paramsMatch(c,params,tv,t instanceof EnumDeclaration?2:1)){found=c;cnt++;} }
+                        if(name.equals("<init>")){ for(ConstructorDeclaration c:t.getConstructors()) if(paramsMatch2(c,params,tv,0,true)){found=c;cnt++;}
+                            int sk=t instanceof EnumDeclaration?2:(t.isNestedType()&&!t.isStatic()&&!(t instanceof EnumDeclaration)?1:0);
+                            if(found==null&&sk>0) for(ConstructorDeclaration c:t.getConstructors()) if(paramsMatch(c,params,tv,sk)){found=c;cnt++;} }
                         else for(MethodDeclaration m:t.getMethodsByName(name)) if(paramsMatch(m,params,tv,0)){found=m;cnt++;}
                         if(op.equals("method-delete")){ if(found!=null&&cnt==1){ found.remove(); applied++; changed=true; } else { rep.println("BENIGN-NOMETHOD-DEL "+cls+" "+name+"("+params+") cnt="+cnt); } break; }
                         ParseResult<BodyDeclaration<?>> r=jp.parseBodyDeclaration(o.get("text")); if(!r.isSuccessful()){ rep.println("PARSE-METHOD "+cls+" "+name+" "+r.getProblems().get(0)); failed++; break; }

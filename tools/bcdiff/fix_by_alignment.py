@@ -11,6 +11,7 @@ A varK that is declared within SCOPE_LINES lines above is considered fine and is
 usage: fix_by_alignment.py <javac.log> <compile-root> <strip-prefix> <ws-root>[,<ws-root>...]
 """
 import difflib, os, re, sys, collections
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 log, root, strip, wsroots = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4].split(",")
 SCOPE_LINES = 80
@@ -23,20 +24,10 @@ NOT_TYPES = {"return", "new", "else", "case", "throw", "instanceof", "yield", "a
 
 def tokens(text):
     """[(token, line_number)] with comments removed (line numbers kept)."""
-    n, j, cleaned = len(text), 0, []
-    while j < n:
-        if text.startswith("/*", j):
-            k = text.find("*/", j + 2); k = n if k < 0 else k + 2
-            cleaned.append("\n" * text.count("\n", j, k)); j = k
-        elif text.startswith("//", j):
-            k = text.find("\n", j); j = n if k < 0 else k
-        else:
-            cleaned.append(text[j]); j += 1
-    text = "".join(cleaned)
-    starts = [0]
-    for m in re.finditer("\n", text):
-        starts.append(m.end())
     import bisect
+    from stmtlib import mask_comments
+    text = mask_comments(text)
+    starts = [0] + [m.end() for m in re.finditer("\n", text)]
     return [(m.group(0), bisect.bisect_right(starts, m.start())) for m in TOK.finditer(text)]
 
 
