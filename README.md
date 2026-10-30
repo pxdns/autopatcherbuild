@@ -20,7 +20,7 @@ Pick a Minecraft version, download its patcher, run it with **your own** officia
 | Version | State |
 | --- | --- |
 | 26.2 | builds the patcher GUI and CLI jars only (no patch bundle, skeleton or overlay: those are not in the source repo) |
-| 26.3, 1.16.5, 1.14, 1.12 | not started in this build |
+| 26.3, 1.16.5, 1.14, 1.12 | not started in this build. The 1.12 and 1.14 patch tools now live in `patcher/` of pxdns/zephr-source and pxdns/zephr-1.14-source. |
 
 **Run history.** Run 1 failed because the token could not read the wrong repo; run 2 checked out `pxdns/eaglercraft-26.2` but expected a `targets/26.2.json` descriptor that repo does not have. The workflow now only builds `src/patcher/patcher/java-cli/build.sh`; its first run with this design is pending.
 
