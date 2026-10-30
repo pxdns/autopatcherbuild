@@ -1,6 +1,6 @@
 name: Build patcher package
 
-# Builds the 26.2 patcher's Java command-line and GUI jars from the private pxdns/eaglercraft-26.2 repo and
+# Builds a patcher's Java command-line and GUI jars from patcher/<version> in the private pxdns/26.3 repo and
 # publishes them as a GitHub Release in THIS repository. Only the patcher source is built: the source-patch bundle,
 # project skeleton and resource overlay are not in that repo, and the package never contains Mojang's client jar
 # (the person who runs the patcher supplies their own). Needs the PATCHER_TOKEN secret (see docs/SETUP.md).
@@ -10,8 +10,13 @@ name: Build patcher package
 on:
   workflow_dispatch:
     inputs:
+      version:
+        description: "Patcher to build (only 26.2 builds so far)"
+        type: choice
+        options: ["26.2", "26.3", "1.16.5", "1.14", "1.12"]
+        default: "26.2"
       patcher_ref:
-        description: "Branch, tag or commit of pxdns/eaglercraft-26.2"
+        description: "Branch, tag or commit of pxdns/26.3 (the private patcher hub)"
         default: "main"
       publish:
         description: "Publish a release when the build succeeds"
@@ -41,16 +46,22 @@ jobs:
             exit 1
           fi
 
+      - name: Only 26.2 has a build so far
+        if: ${{ inputs.version != '26.2' }}
+        run: |
+          echo "::error::No automated build for ${{ inputs.version }} yet: its patcher code is in pxdns/26.3 patcher/${{ inputs.version }} but cannot produce a package."
+          exit 1
+
       - name: Check out the private source (only the patcher folder)
         uses: actions/checkout@v7
         with:
-          repository: pxdns/eaglercraft-26.2
+          repository: pxdns/26.3
           ref: ${{ inputs.patcher_ref }}
           token: ${{ secrets.PATCHER_TOKEN }}
           path: src
           persist-credentials: false      # the token is not left in the checkout's git config
           fetch-depth: 1
-          sparse-checkout: src/patcher
+          sparse-checkout: patcher/26.2
           sparse-checkout-cone-mode: true
 
       - uses: actions/setup-java@v6
@@ -59,11 +70,11 @@ jobs:
           java-version: "17"
 
       - name: Build the command-line and GUI jars
-        run: bash src/src/patcher/patcher/java-cli/build.sh
+        run: bash src/patcher/26.2/patcher/java-cli/build.sh
 
       - name: Collect the jars
         run: |
-          out=src/src/patcher/patcher/java-cli/build
+          out=src/patcher/26.2/patcher/java-cli/build
           mkdir -p dist
           cp "$out/eaglercraft-26.2-u1-patcher-gui.jar" dist/Eaglercraft-26.2-patcher-gui.jar
           cp "$out/eaglercraft-26.2-java-cli.jar"       dist/Eaglercraft-26.2-patcher-cli.jar
